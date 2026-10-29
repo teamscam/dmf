@@ -1,0 +1,9 @@
+mkdir C:\DMF
+mkdir C:\DMF\Exp2
+mkdir C:\DMF\Exp2\TestDisk
+mkdir C:\DMF\Exp2\Recovered
+
+cd /d C:\DMF\Exp2\Recovered
+
+C:\DMF\Exp2\TestDisk\photorec_win.exe
+
