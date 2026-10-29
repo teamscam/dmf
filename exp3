@@ -1,0 +1,49 @@
+$PSVersionTable.PSVersion
+
+mkdir C:\DMF
+cd C:\DMF
+mkdir Exp3
+cd Exp3
+mkdir Raw_Logs
+mkdir Exported_CSV
+mkdir Reports
+
+auditpol /get /subcategory:"Logon"
+
+auditpol /set /subcategory:"Logon" /failure:enable
+
+auditpol /get /subcategory:"Logon"
+
+$startTime = Get-Date
+
+Get-WinEvent -LogName Security -MaxEvents 20
+
+$events = Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4625; StartTime=$startTime} -MaxEvents 20
+
+$events | Format-Table TimeCreated, Id, ProviderName, MachineName -AutoSize
+
+$count = @($events).Count
+
+Write-Host "Failed login events detected: $count"
+
+if ($count -ge 3) { Write-Host "ALERT: Multiple failed login attempts detected!" }
+
+wevtutil epl Security "C:\DMF\Exp3\Raw_Logs\Security.evtx"
+
+$events | Select-Object TimeCreated, Id, ProviderName, MachineName, Message | Export-Csv "C:\DMF\Exp3\Exported_CSV\forensic_events.csv" -NoTypeInformation -Encoding UTF8
+
+Test-Path "C:\DMF\Exp3\Exported_CSV\forensic_events.csv"
+
+Import-Csv "C:\DMF\Exp3\Exported_CSV\forensic_events.csv" | Format-List
+
+Get-FileHash "C:\DMF\Exp3\Exported_CSV\forensic_events.csv" -Algorithm SHA256
+
+Get-FileHash "C:\DMF\Exp3\Exported_CSV\forensic_events.csv" -Algorithm SHA256 | Out-File "C:\DMF\Exp3\Reports\SHA256_Hash.txt"
+
+Get-Content "C:\DMF\Exp3\Reports\SHA256_Hash.txt"
+
+explorer C:\DMF\Exp3
+
+dir C:\DMF\Exp3 -Recurse
+
+Get-FileHash "C:\DMF\Exp3\Exported_CSV\forensic_events.csv" -Algorithm SHA256
